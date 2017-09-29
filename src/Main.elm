@@ -3,7 +3,7 @@ module Main exposing (..)
 import Html exposing (div, Html, text, button)
 import Html.Events exposing (onClick)
 import Navigation exposing (Location, newUrl)
-import Routing exposing (Route(..), parseLocation, routeToString)
+import Routing exposing (Route(..), parseLocation)
 
 
 type alias Model =
@@ -32,7 +32,7 @@ view m =
 
 header : Html Msg
 header =
-    div [] [ button [ onClick (GoToRoute Starred) ] [ text "Starred" ] ]
+    div [] [ button [ onClick (GoToRoute (Starred "")) ] [ text "Starred" ] ]
 
 
 selectRouteView : Model -> Html msg
@@ -44,7 +44,7 @@ selectRouteView m =
         NotFoundRoute ->
             notFoundView
 
-        Starred ->
+        Starred user ->
             starredView
 
 
@@ -66,8 +66,11 @@ notFoundView =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        GoToRoute (Starred user) ->
+            ( model, newUrl ("#starred/" ++ user) )
+
         GoToRoute r ->
-            ( model, newUrl ("#" ++ (routeToString r)) )
+            ( model, Cmd.none )
 
         OnLocationChange l ->
             init l

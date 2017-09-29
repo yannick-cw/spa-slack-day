@@ -1,25 +1,20 @@
-module Routing exposing (Route(..), parseLocation, routeToString)
+module Routing exposing (Route(..), parseLocation)
 
 import Navigation exposing (Location)
-import UrlParser exposing (map, top, Parser, parseHash, oneOf, s)
+import UrlParser exposing (map, top, Parser, parseHash, oneOf, s, (</>), string)
 
 
 type Route
     = Home
-    | Starred
+    | Starred String
     | NotFoundRoute
-
-
-routeToString : Route -> String
-routeToString =
-    String.toLower << toString
 
 
 matchers : Parser (Route -> a) a
 matchers =
     oneOf
         [ map Home top
-        , map Starred (s (routeToString Starred))
+        , map Starred (s "starred" </> string)
         ]
 
 

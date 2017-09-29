@@ -33,6 +33,12 @@ hashFuzzer =
             |> F.map ((++) "#")
 
 
+userFuzzer : F.Fuzzer String
+userFuzzer =
+    F.string
+        |> F.conditional { retries = 10, fallback = identity, condition = not << (String.contains "/") }
+
+
 suite : Test
 suite =
     describe "Routing"
@@ -51,15 +57,15 @@ suite =
                         newLocation
                             |> parseLocation
                             |> E.equal Home
-            , test "starred leads to Starred Page" <|
-                \_ ->
+            , fuzz userFuzzer "starred with any user leads to Starred Page" <|
+                \userName ->
                     let
                         newLocation =
-                            { testLocation | hash = "#starred" }
+                            { testLocation | hash = "#starred/" ++ userName }
                     in
                         newLocation
                             |> parseLocation
-                            |> E.equal Starred
+                            |> E.equal (Starred userName)
             , fuzz hashFuzzer "every unknown route leads to NotFound Page" <|
                 \hash ->
                     let
@@ -69,12 +75,5 @@ suite =
                         newLocation
                             |> parseLocation
                             |> E.equal NotFoundRoute
-            ]
-        , describe "stringify"
-            [ test "stringify the Starred route" <|
-                \_ ->
-                    Starred
-                        |> routeToString
-                        |> E.equal "starred"
             ]
         ]
