@@ -1,8 +1,9 @@
 module Main exposing (..)
 
-import Html exposing (div, Html, text)
-import Navigation exposing (Location)
-import Routing exposing (Route(..), parseLocation)
+import Html exposing (div, Html, text, button)
+import Html.Events exposing (onClick)
+import Navigation exposing (Location, newUrl)
+import Routing exposing (Route(..), parseLocation, routeToString)
 
 
 type alias Model =
@@ -11,6 +12,7 @@ type alias Model =
 
 type Msg
     = OnLocationChange Location
+    | GoToRoute Route
 
 
 main : Program Never Model Msg
@@ -23,14 +25,27 @@ main =
         }
 
 
-view : Model -> Html msg
+view : Model -> Html Msg
 view m =
+    div [] [ header, selectRouteView m ]
+
+
+header : Html Msg
+header =
+    div [] [ button [ onClick (GoToRoute Starred) ] [ text "Starred" ] ]
+
+
+selectRouteView : Model -> Html msg
+selectRouteView m =
     case m of
         Home ->
             homeView
 
         NotFoundRoute ->
             notFoundView
+
+        Starred ->
+            starredView
 
 
 homeView : Html msg
@@ -50,7 +65,12 @@ notFoundView =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    ( model, Cmd.none )
+    case msg of
+        GoToRoute r ->
+            ( model, newUrl ("#" ++ (routeToString r)) )
+
+        OnLocationChange l ->
+            init l
 
 
 init : Location -> ( Model, Cmd Msg )
