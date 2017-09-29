@@ -1,8 +1,8 @@
 module Main exposing (..)
 
-import Html exposing (div, Html)
+import Html exposing (div, Html, text)
 import Navigation exposing (Location)
-import UrlParser exposing (..)
+import Routing exposing (Route(..), parseLocation)
 
 
 type alias Model =
@@ -25,7 +25,27 @@ main =
 
 view : Model -> Html msg
 view m =
-    div [] []
+    case m of
+        Home ->
+            homeView
+
+        NotFoundRoute ->
+            notFoundView
+
+
+homeView : Html msg
+homeView =
+    div [] [ text "Home" ]
+
+
+starredView : Html msg
+starredView =
+    div [] [ text "STAr" ]
+
+
+notFoundView : Html msg
+notFoundView =
+    div [] [ text "Not Found" ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -40,27 +60,3 @@ init location =
             parseLocation location
     in
         ( currentRoute, Cmd.none )
-
-
-
--- routing
-
-
-type Route
-    = Home
-    | NotFoundRoute
-
-
-matchers : Parser (Route -> a) a
-matchers =
-    map Home top
-
-
-parseLocation : Location -> Route
-parseLocation location =
-    case (parseHash matchers location) of
-        Just route ->
-            route
-
-        Nothing ->
-            NotFoundRoute
