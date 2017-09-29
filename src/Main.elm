@@ -4,21 +4,24 @@ import Html exposing (div, Html, text, button)
 import Html.Events exposing (onClick)
 import Navigation exposing (Location, newUrl)
 import Routing exposing (Route(..), parseLocation)
+import Task
+import Process
 
 
 type alias Model =
-    Route
+    { routes : Route, repos : List String, user : String }
 
 
 type Msg
     = OnLocationChange Location
     | GoToRoute Route
+    | GotStarred (List String)
 
 
 main : Program Never Model Msg
 main =
     Navigation.program OnLocationChange
-        { init = init
+        { init = init (Model Home [] "")
         , view = view
         , update = update
         , subscriptions = \_ -> Sub.none
@@ -37,7 +40,7 @@ header =
 
 selectRouteView : Model -> Html msg
 selectRouteView m =
-    case m of
+    case m.routes of
         Home ->
             homeView
 
@@ -45,7 +48,7 @@ selectRouteView m =
             notFoundView
 
         Starred user ->
-            starredView
+            starredView m.repos
 
 
 homeView : Html msg
@@ -53,9 +56,9 @@ homeView =
     div [] [ text "Home" ]
 
 
-starredView : Html msg
-starredView =
-    div [] [ text "STAr" ]
+starredView : List String -> Html msg
+starredView repos =
+    div [] ([ text "STAr" ] ++ (repos |> List.map (\repo -> div [] [ text repo ])))
 
 
 notFoundView : Html msg
@@ -67,19 +70,27 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GoToRoute (Starred user) ->
-            ( model, newUrl ("#starred/" ++ user) )
+            ( model, mockedFetchUser user )
 
         GoToRoute r ->
             ( model, Cmd.none )
 
         OnLocationChange l ->
-            init l
+            init model l
+
+        GotStarred repos ->
+            ( { model | repos = repos }, newUrl ("#starred/" ++ model.user) )
 
 
-init : Location -> ( Model, Cmd Msg )
-init location =
+mockedFetchUser : String -> Cmd Msg
+mockedFetchUser userName =
+    Task.perform (\_ -> GotStarred [ "repo1" ]) ((Process.sleep 1000) |> Task.andThen (always <| Task.succeed ""))
+
+
+init : Model -> Location -> ( Model, Cmd Msg )
+init model location =
     let
         currentRoute =
             parseLocation location
     in
-        ( currentRoute, Cmd.none )
+        ( { model | routes = currentRoute }, Cmd.none )
