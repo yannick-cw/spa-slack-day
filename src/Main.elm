@@ -9,7 +9,7 @@ import Process
 
 
 type alias Model =
-    { routes : Route, repos : List String, user : String }
+    { routes : Route, repos : List String, user : String, loadingIndicator : Bool }
 
 
 type Msg
@@ -21,7 +21,7 @@ type Msg
 main : Program Never Model Msg
 main =
     Navigation.program OnLocationChange
-        { init = init (Model Home [] "")
+        { init = init (Model Home [] "" False)
         , view = view
         , update = update
         , subscriptions = \_ -> Sub.none
@@ -29,8 +29,20 @@ main =
 
 
 view : Model -> Html Msg
-view m =
-    div [] [ header, selectRouteView m ]
+view model =
+    let
+        loadingIndicator =
+            if model.loadingIndicator then
+                [ div [] [ text "Loading..." ] ]
+            else
+                []
+    in
+        div []
+            ([ header
+             , selectRouteView model
+             ]
+                ++ loadingIndicator
+            )
 
 
 header : Html Msg
@@ -70,7 +82,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GoToRoute (Starred user) ->
-            ( model, mockedFetchUser user )
+            ( { model | loadingIndicator = True }, mockedFetchUser user )
 
         GoToRoute r ->
             ( model, Cmd.none )
@@ -79,7 +91,7 @@ update msg model =
             init model l
 
         GotStarred repos ->
-            ( { model | repos = repos }, newUrl ("#starred/" ++ model.user) )
+            ( { model | repos = repos, loadingIndicator = False }, newUrl ("#starred/" ++ model.user) )
 
 
 mockedFetchUser : String -> Cmd Msg
